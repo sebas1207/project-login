@@ -1,34 +1,41 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs';
+import { catchError } from 'rxjs';
+
+interface LoginResponse {
+  id: number;
+  userName: string;
+  userPassword: string;
+}
 
 @Injectable({
   providedIn:'root'
 })
 export class AuthService {
-  private loginUrl = 'http://localhost:8080/user/login';
-  constructor(private http: HttpClient){ }
+  private loginUrl = 'http://185.209.230.19:8081/user/login';
+  constructor(private http: HttpClient){ 
 
-  login(username: string, password: string): Observable<boolean>{
-    const headers = new HttpHeaders({'Content-Type':'application/json'});
-    const body = JSON.stringify({username, password});
-    return this.http.post<any>(this.loginUrl, body, {headers}).pipe(
-      map(response =>{
-        if(response && response.token){
-          localStorage.setItem('token', response.token);
-          return true;
-        }else {
-          return false;
-        }
-      }),
-      catchError(error =>{
-        console.error('Error de inicio de sesion', error);
-        return throwError(()=> new Error('error de inicio de sesion'));
+  }
 
-      })
+  login(userName: string, userPassword: string): Observable<LoginResponse> {
+    const body = { userName, userPassword };
+    console.log("datos", body);
+    return this.http.post<LoginResponse>(this.loginUrl, body).pipe(
+      catchError(this.handleError)
     );
   }
+  private handleError(error:HttpErrorResponse){
+  let errorMessage= 'Ocurrio un error';
+  if(error.error instanceof ErrorEvent){
+    errorMessage = `Client-side error: ${error.error.message}`;
+  }else {
+    errorMessage= `Server error: ${error.status}\nMessage: ${error.message}`;
+  }
+  console.error(errorMessage);
+  return throwError(()=> new Error(errorMessage));
+  } 
+
   logout(): void {
     localStorage.removeItem('token');
   }
