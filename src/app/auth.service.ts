@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs';
+import { catchError,tap } from 'rxjs';
+import { response } from 'express';
 
 interface LoginResponse {
   id: number;
@@ -22,6 +23,9 @@ export class AuthService {
     const body = { userName, userPassword };
     console.log("datos", body);
     return this.http.post<LoginResponse>(this.loginUrl, body).pipe(
+     tap((response:LoginResponse)=>{
+      sessionStorage.setItem('user',JSON.stringify(response));
+     }),
       catchError(this.handleError)
     );
   }
@@ -37,10 +41,10 @@ export class AuthService {
   } 
 
   logout(): void {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('user');
   }
 
   isAuthenticated():boolean{
-    return !!localStorage.getItem('token');
+    return !!sessionStorage.getItem('user');
   }
 }
